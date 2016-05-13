@@ -11,7 +11,7 @@
       <link name="body">
         <visual name="visual">
           <geometry>
-            <mesh><uri>file://tolganick.dae</uri></mesh>
+            <mesh><uri>file://myjunk/tolganick.dae</uri></mesh>
           </geometry>
         </visual>
       </link>
@@ -75,13 +75,13 @@
               <output>points</output>
             </depth_camera>
           </camera>
-          <plugin filename="/home/burak/workspace/dronesim/libDepthCameraPlugin.so" name="depth_camera_plugin" />
+          <plugin filename="build/lib/libDepthCameraPlugin.so" name="depth_camera_plugin" />
           <always_on>true</always_on>
           <update_rate>10</update_rate>
         </sensor>
       </link>
       <static>true</static>
-      <plugin filename="/home/burak/workspace/dronesim/libcamera_move.so" name="camera_pose_plugin" />
+      <plugin filename="lib/libcamera_move.so" name="camera_pose_plugin" />
     </model>
 
   </world>
