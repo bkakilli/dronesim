@@ -19,20 +19,68 @@
 #include "DepthCameraPlugin.hh"
 
 using namespace gazebo;
-using namespace std;
+using namespace boost::interprocess;
 GZ_REGISTER_SENSOR_PLUGIN(DepthCameraPlugin)
 
 /////////////////////////////////////////////////
 DepthCameraPlugin::DepthCameraPlugin()
 : SensorPlugin(), width(0), height(0), depth(0)
-{
+{  
 }
 
 /////////////////////////////////////////////////
 DepthCameraPlugin::~DepthCameraPlugin()
 {
+  std::cout << "Terminating" << std::endl;
+  if (data->connected) {
+    data->endConnection = true;
+    data->cond.notify_all();
+  }
+  shared_memory_object::remove("MySharedMemory");
   this->parentSensor.reset();
   this->depthCamera.reset();
+}
+
+void DepthCameraPlugin::initSharedMemory() {
+
+  //Erase previous shared memory and schedule erasure on exit
+  /*struct shm_remove
+  {
+    shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+    ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+  } remover;*/
+
+  shared_memory_object::remove("MySharedMemory");
+  try{
+    shm = shared_memory_object(
+      create_only               //only create
+      ,"MySharedMemory"           //name
+      ,read_write                //read-write mode
+    );  
+    //Set size
+    shm.truncate(sizeof(trace_queue));
+
+    //Map the whole shared memory in this process
+    region = mapped_region(shm                       //What to map
+       ,read_write //Map it as read-write
+       );
+
+    //Construct the shared structure in memory
+    //data = s_trace( (trace_queue*) region.get_address() );
+    data = new (region.get_address()) trace_queue;
+
+    data->reading = false;
+    data->endConnection = false;
+    data->connected = false;
+    /*this->data = new (addr) trace_queue;
+    this->data->reading = true;
+    this->data->p_end = false;*/
+
+  }
+  catch(interprocess_exception &ex){
+    std::cout << ex.what() << std::endl;
+    shared_memory_object::remove("MySharedMemory"); 
+  }
 }
 
 /////////////////////////////////////////////////
@@ -54,6 +102,10 @@ void DepthCameraPlugin::Load(sensors::SensorPtr _sensor,
   this->depth = this->depthCamera->ImageDepth();
   this->format = this->depthCamera->ImageFormat();
 
+  printf("w:%d h:%d\n", width, height);
+  initSharedMemory();
+
+
   this->newDepthFrameConnection = this->depthCamera->ConnectNewDepthFrame(
       std::bind(&DepthCameraPlugin::OnNewDepthFrame,
         this, std::placeholders::_1, std::placeholders::_2,
@@ -68,6 +120,7 @@ void DepthCameraPlugin::Load(sensors::SensorPtr _sensor,
       std::bind(&DepthCameraPlugin::OnNewImageFrame,
         this, std::placeholders::_1, std::placeholders::_2,
         std::placeholders::_3, std::placeholders::_4, std::placeholders::_5));
+  
 
   this->parentSensor->SetActive(true);
 }
@@ -99,43 +152,16 @@ void DepthCameraPlugin::OnNewDepthFrame(const float *_image,
 }
 
 /////////////////////////////////////////////////
-bool control = true;
 void DepthCameraPlugin::OnNewRGBPointCloud(const float * _pcd,
                 unsigned int _width, unsigned int _height,
                 unsigned int /*_depth*/, const std::string & _format)
 {
-  
-  if(control){
 
-    int pcdSize = _width * _height;
-    ofstream myfile;
-
-    myfile.open ("/home/burak/workspace/dronesim/example.pcd");
-    
-    myfile << "VERSION .7\n"
-           << "FIELDS x y z rgb\n"
-           << "SIZE 4 4 4 4\n"
-           << "TYPE F F F F\n"
-           << "COUNT 1 1 1 1\n"
-           << "WIDTH " << _width << "\n"
-           << "HEIGHT " << _height << "\n"
-           << "VIEWPOINT 0 0 0 1 0 0 0\n"
-           << "POINTS " << _width*_height << "\n"
-           << "DATA ascii\n";
-
-    for (int i = 0; i < 4*pcdSize; i=i+4) {
-      myfile  << _pcd[i] << " "
-              << _pcd[i+1] << " "
-              << _pcd[i+2] << " "
-              << _pcd[i+3] << "\n";
-    }
-    /*for (int i = 0; i < 4*pcdSize; i=i+4) {
-      myfile  << _pcd[i] << " "
-              << _pcd[i+1] << " "
-              << _pcd[i+2] << "\n";
-    }*/
-    myfile.close();
+  if(!data->reading){
+    memcpy ( data->buffer, _pcd, trace_queue::BUFFERSIZE );
+    data->cond.notify_all();
   }
+
 }
 
 /////////////////////////////////////////////////

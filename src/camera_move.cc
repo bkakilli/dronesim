@@ -1,5 +1,6 @@
 #include <boost/bind.hpp>
 #include <gazebo/gazebo.hh>
+#include <ignition/math.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
 #include <stdio.h>
@@ -13,17 +14,48 @@ namespace gazebo
       // Store the pointer to the model
       this->model = _parent;
 
-      // Listen to the update event. This event is broadcast every
-      // simulation iteration.
-      this->updateConnection = event::Events::ConnectWorldUpdateBegin(
-          boost::bind(&CameraMove::OnUpdate, this, _1));
-    }
+      // create the animation
+      gazebo::common::PoseAnimationPtr anim(
+            // name the animation "test",
+            // make it last 10 seconds,
+            // and set it on a repeat loop
+            new gazebo::common::PoseAnimation("test", 20.0, true));
 
-    // Called by the world update start event
-    public: void OnUpdate(const common::UpdateInfo & /*_info*/)
-    {
-      // Apply a small linear velocity to the model.
-      this->model->SetRelativePose(math::Pose(0, 0, 1, 0, 0.8, 0));
+      gazebo::common::PoseKeyFrame *key;
+
+      // set starting location of the box
+      key = anim->CreateKeyFrame(0);
+      key->Translation(ignition::math::Vector3d(5, 0, 1));
+      key->Rotation(ignition::math::Quaterniond(0, 0, -3.1429));
+
+      // set waypoint location after 2 seconds
+      key = anim->CreateKeyFrame(5.0);
+      key->Translation(ignition::math::Vector3d(0, 5, 1));
+      key->Rotation(ignition::math::Quaterniond(0, 0, -1.5707));
+
+
+      key = anim->CreateKeyFrame(10.0);
+      key->Translation(ignition::math::Vector3d(-5, 0, 1));
+      key->Rotation(ignition::math::Quaterniond(0, 0, 0));
+
+
+      key = anim->CreateKeyFrame(15.0);
+      key->Translation(ignition::math::Vector3d(0, -5, 1));
+      key->Rotation(ignition::math::Quaterniond(0, 0, 1.5707));
+
+
+      key = anim->CreateKeyFrame(20.0);
+      key->Translation(ignition::math::Vector3d(5, 0, 1));
+      key->Rotation(ignition::math::Quaterniond(0, 0, 3.1429));
+
+      // set final location equal to starting location
+      /*key = anim->CreateKeyFrame(10);
+      key->Translation(ignition::math::Vector3d(0, 0, 0));
+      key->Rotation(ignition::math::Quaterniond(0, 0, 0));*/
+
+      // set the animation
+      this->model->SetAnimation(anim);
+
     }
 
     // Pointer to the model
