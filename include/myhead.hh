@@ -21,5 +21,5 @@ struct trace_queue
    //Is there any message
    bool reading;
    bool connected;
-   bool endConnection;
+   bool p_end;
 };

@@ -20,6 +20,9 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
+#include <signal.h>
+
 
 #include "gazebo/common/Plugin.hh"
 #include "gazebo/sensors/DepthCameraSensor.hh"
@@ -27,14 +30,7 @@
 #include "gazebo/rendering/DepthCamera.hh"
 #include "gazebo/util/system.hh"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
-#include "myhead.hh"
-
-//typedef boost::shared_ptr<trace_queue> s_trace;
-typedef boost::shared_ptr<boost::interprocess::shared_memory_object> s_shm_object;
+#include "DronesimShm.hh"
 
 namespace gazebo
 {
@@ -63,17 +59,7 @@ namespace gazebo
                               unsigned int _width, unsigned int _height,
                               unsigned int _depth, const std::string &_format);
 
-    //public: int* test;
-    public: boost::interprocess::shared_memory_object shm;
-    public: boost::interprocess::mapped_region region;
-    //boost::interprocess::mapped_region*         regionPtr;
-    //public: s_trace data;
-    public: trace_queue* data;
-    struct shm_remove
-    {
-        shm_remove() { boost::interprocess::shared_memory_object::remove("MySharedMemory"); }
-        ~shm_remove(){ boost::interprocess::shared_memory_object::remove("MySharedMemory"); }
-    } remover_DoNotTouchThis;
+    public: ShmWriter shmWriter;
 
     protected: unsigned int width, height, depth;
     protected: std::string format;

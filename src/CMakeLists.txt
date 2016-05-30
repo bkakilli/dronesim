@@ -20,7 +20,7 @@ link_directories(${GAZEBO_LIBRARY_DIRS} ${PCL_LIBRARY_DIRS})
 include_directories(${GAZEBO_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 add_definitions(${PCL_DEFINITIONS})
 
-add_library(DepthCameraPlugin SHARED DepthCameraPlugin.cc)
+add_library(DepthCameraPlugin SHARED DronesimShm.cc DepthCameraPlugin.cc)
 #target_link_libraries(DepthCameraPlugin ${GAZEBO_LIBRARIES})
 target_link_libraries(DepthCameraPlugin ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} rt)
 
@@ -28,6 +28,6 @@ add_library(camera_move SHARED camera_move.cc)
 #target_link_libraries(camera_move ${GAZEBO_LIBRARIES})
 target_link_libraries(camera_move ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
 
-ADD_EXECUTABLE( reader reader.cc )
+ADD_EXECUTABLE( reader DronesimShm.cc reader.cc )
 TARGET_LINK_LIBRARIES( reader  ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_LIBRARIES} ${Boost_LIBRARIES} rt)
 
