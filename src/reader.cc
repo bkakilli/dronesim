@@ -13,10 +13,30 @@
 #include <pcl/io/pcd_io.h>
 #include "DronesimShm.hh"
 
+#include <boost/asio.hpp>
+#include <boost/array.hpp>
+
 typedef boost::shared_ptr<pcl::visualization::PCLVisualizer> pclVis;
 
 bool endProgram;
 pclVis viewer;
+boost::array<float, trace_queue::BUFFERSIZE+1> socketBuffer;
+
+void sendFloatArray(std::string host, int port, float floatArray[], int size)
+{
+   boost::asio::io_service ios;
+   boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(host), port);
+   boost::asio::ip::tcp::socket socket(ios);
+   socket.connect(endpoint);
+   usleep(100000);
+
+   std::cout << "size:" << size << std::endl;
+   std::memcpy(&socketBuffer[0], floatArray, size*4);
+   boost::system::error_code error;
+   socket.write_some(boost::asio::buffer(socketBuffer, size*4), error);
+
+   socket.close();
+}
 
 void doSmth(float* pcd) {
 
@@ -35,6 +55,26 @@ void doSmth(float* pcd) {
          pCloud->points.push_back(ptXYZ);
       }
    }*/
+
+   try{
+
+      int pcdLen = trace_queue::BUFFERSIZE;
+      float sendArray[pcdLen*3/4+1];
+      int sendSize = 0;
+      for (int i = 0; i < pcdLen; i=i+4)
+      {
+         if( !(pcd[i] == 0 && pcd[i+1] == 0 && pcd[i+2] == 0 && pcd[i+3] == 1) ) {
+            sendSize++;
+            memcpy(sendArray+3*sendSize, pcd+i, 12);
+         }
+      }
+
+      //int pcdLen = sizeof(pcd)/4;
+      sendArray[0] = (3*sendSize+1)*4;
+      //std::copy(pcd, pcd+pcdLen, sendArray+1);
+
+      sendFloatArray("128.230.214.68", 30000, sendArray, 3*sendSize+1);
+   } catch (...){}
 
    for (int i = 0; i < trace_queue::BUFFERSIZE; i=i+4)
    {
