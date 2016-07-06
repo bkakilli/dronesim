@@ -30,7 +30,8 @@ ShmWriter::ShmWriter() {
 		data->reading = false;
 		data->p_end = false;
 		data->connected = false;
-
+		data->currentTime = 0;
+		
 	}
 	catch(interprocess_exception &ex){
 		std::cout << ex.what() << std::endl;
@@ -43,10 +44,11 @@ ShmWriter::~ShmWriter() {
 	shared_memory_object::remove(SHARED_MEMORY_UNIQUE_ID);
 }
 
-void ShmWriter::write(const float* pcd) {
+void ShmWriter::write(const float* pcd, const float* pose) {
 
   if(!data->reading){
     memcpy ( data->buffer, pcd, trace_queue::BUFFERSIZE*4 );
+    memcpy ( data->pose, pose, 7*4 );
     data->cond.notify_all();
   }
 	
@@ -70,6 +72,7 @@ ShmReader::ShmReader() {
 
 		//Obtain a pointer to the shared structure
 		data = static_cast<trace_queue*>(region.get_address());
+		data->connected = true;
 	}
 	catch(interprocess_exception &ex){
 		std::cout << ex.what() << std::endl;

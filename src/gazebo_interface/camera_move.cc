@@ -54,7 +54,7 @@ namespace gazebo
       key->Rotation(ignition::math::Quaterniond(0, 0, 0));*/
 
       // set the animation
-      this->model->SetAnimation(anim);
+      //this->model->SetAnimation(anim);
 
     }
 

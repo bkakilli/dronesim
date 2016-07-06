@@ -16,9 +16,70 @@
         </visual>
       </link>
     </model>
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
 
-    <model name="camera_model">
-      <pose>-1 0 2 0 .5 0</pose>
+    <model name="quadcopter_model">
+      <pose>-1 0 2 0 0 0</pose>
+      <link name="link">
+        
+        <inertial>
+          <mass>1.316</mass>
+          <inertia>
+            <ixx>0.0128</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.0128</iyy>
+            <iyz>0</iyz>
+            <izz>0.0218</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.8 0.8 0.23</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+        <pose>0 0 0.19 0 0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://quadrotor/meshes/quadrotor_base.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+
+        <sensor name="camera" type="depth">
+          <pose>0 0 0 0 0.5 0</pose>
+          <camera>
+            <horizontal_fov>1.04719755</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+            </image>
+            <clip>
+              <near>0.5</near>
+              <far>5</far>
+            </clip>
+            <depth_camera>
+              <output>points</output>
+            </depth_camera>
+          </camera>
+          <plugin filename="build/lib/libDepthCameraPlugin.so" name="depth_camera_plugin" />
+          <always_on>true</always_on>
+          <update_rate>10</update_rate>
+        </sensor>
+      </link>
+
+      <static>true</static>
+      <plugin filename="build/lib/libcamera_move.so" name="camera_pose_plugin" />
+    </model>
+
+    <!--<model name="camera_model">
+      <pose>-1 0 2 0 0 0</pose>
       <link name="camera_link">
         <inertial>
           <inertia>
@@ -81,8 +142,8 @@
         </sensor>
       </link>
       <static>true</static>
-      <!--<plugin filename="build/lib/libcamera_move.so" name="camera_pose_plugin" />-->
-    </model>
+      <plugin filename="build/lib/libcamera_move.so" name="camera_pose_plugin" />
+    </model>-->
 
   </world>
 </sdf>

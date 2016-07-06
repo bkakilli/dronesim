@@ -23,12 +23,16 @@
 #include <fstream>
 #include <signal.h>
 
-
+#include "gazebo/common/common.hh"
 #include "gazebo/common/Plugin.hh"
 #include "gazebo/sensors/DepthCameraSensor.hh"
 #include "gazebo/sensors/CameraSensor.hh"
 #include "gazebo/rendering/DepthCamera.hh"
 #include "gazebo/util/system.hh"
+
+#include "gazebo/physics/PhysicsIface.hh"
+#include "gazebo/physics/World.hh"
+#include "gazebo/physics/Model.hh"
 
 #include "DronesimShm.hh"
 
@@ -59,7 +63,12 @@ namespace gazebo
                               unsigned int _width, unsigned int _height,
                               unsigned int _depth, const std::string &_format);
 
+    public: void posePointsToAnimation(physics::ModelPtr &_model, float* posePoints, int pointCount);
     public: ShmWriter shmWriter;
+    public: physics::ModelPtr quadcopter;
+    public: common::PoseAnimationPtr anim;
+    int count;
+    bool animation;
 
     protected: unsigned int width, height, depth;
     protected: std::string format;

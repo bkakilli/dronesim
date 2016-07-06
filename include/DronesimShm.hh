@@ -19,16 +19,24 @@ struct trace_queue
 
 	//Mutex to protect access to the queue
 	boost::interprocess::interprocess_mutex      mutex;
-
 	boost::interprocess::interprocess_condition  cond;
 
 	//Items to fill
 	float buffer[BUFFERSIZE];
+	float pose[7];	// Translation + Quaternion
+	float currentTime;
+	float targetPose[7];
+
+	float keyFrames[5000];
+	int frameCount;
+	bool startAnimationSignal;
 
 	//Is there any message
 	bool reading;
 	bool connected;
 	bool p_end;
+
+	bool newOrder;
 };
 
 class ShmWriter
@@ -40,7 +48,7 @@ public:
 
     ShmWriter();
     ~ShmWriter();
-    void write(const float* pcd);
+    void write(const float* pcd, const float* pose);
 };
 
 class ShmReader
